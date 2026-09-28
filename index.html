@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetID - Identificación de Mascotas por QR</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .pulse-alert {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-amber-500 to-amber-400 text-white p-2.5 rounded-xl shadow-md">
+                    <i class="fa-solid fa-paw text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold text-slate-900 tracking-tight leading-none">Pet<span class="text-amber-500">ID</span></h1>
+                    <p class="text-xs text-slate-500 font-medium">Placa Inteligente QR</p>
+                </div>
+            </div>
+
+            <!-- Tab Switcher -->
+            <nav class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold">
+                <button id="btn-tab-public" onclick="switchTab('public')" class="flex items-center space-x-2 px-3 sm:px-4 py-1.5 rounded-lg transition-all duration-200 bg-white text-slate-800 shadow-sm">
+                    <i class="fa-solid fa-qrcode text-amber-500"></i>
+                    <span class="hidden sm:inline">Vista de</span> <span>Escaneo QR</span>
+                </button>
+                <button id="btn-tab-admin" onclick="switchTab('admin')" class="flex items-center space-x-2 px-3 sm:px-4 py-1.5 rounded-lg transition-all duration-200 text-slate-500 hover:text-slate-800">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>Panel Dueño</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
+
+        <!-- ========================================== -->
+        <!-- VISTA 1: FICHA PÚBLICA (ESCANEO QR)        -->
+        <!-- ========================================== -->
+        <section id="view-public" class="space-y-6 transition-all">
+            
+            <!-- Banner de Simulación explicativo -->
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs sm:text-sm text-amber-800 flex items-start space-x-3 shadow-sm">
+                <i class="fa-solid fa-circle-info text-amber-500 text-lg mt-0.5 flex-shrink-0"></i>
+                <div>
+                    <strong class="font-semibold">Modo Demostración:</strong> Esta es la pantalla interactiva que ve cualquier persona al escanear con su teléfono el código QR del collar de la mascota. Puedes cambiar sus datos en el <b>"Panel Dueño"</b>.
+                </div>
+            </div>
+
+            <!-- Banner de Estado (Perdido vs Seguro) -->
+            <div id="status-banner" class="bg-red-600 text-white p-4 sm:p-5 rounded-2xl shadow-lg flex items-center justify-between pulse-alert transition-all">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white/20 p-3 rounded-full flex-shrink-0">
+                        <i id="status-icon" class="fa-solid fa-triangle-exclamation text-2xl sm:text-3xl"></i>
+                    </div>
+                    <div>
+                        <h2 id="status-title" class="text-base sm:text-xl font-bold tracking-wide">🚨 ¡ESTOY PERDIDO!</h2>
+                        <p id="status-desc" class="text-xs sm:text-sm text-red-100 font-medium">Por favor ayuda a mi dueño a encontrarme. Ponte en contacto inmediato.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ficha Principal de la Mascota -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <!-- Foto de Portada / Header Mascota -->
+                <div class="relative bg-gradient-to-r from-amber-500 to-amber-600 h-32 sm:h-40">
+                    <div class="absolute -bottom-12 left-6">
+                        <img id="pet-display-photo" src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=400" alt="Mascota" class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl object-cover border-4 border-white shadow-md">
+                    </div>
+                    <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-slate-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                        <i class="fa-solid fa-microchip text-amber-500 mr-1"></i> ID: <span id="pet-display-chip">981020002847192</span>
+                    </div>
+                </div>
+
+                <!-- Info básica -->
+                <div class="pt-14 px-6 pb-6 space-y-6">
+                    <div class="flex justify-between items-start flex-wrap gap-2">
+                        <div>
+                            <h2 id="pet-display-name" class="text-2xl sm:text-3xl font-extrabold text-slate-900">Boomer</h2>
+                            <p class="text-slate-500 font-medium text-sm sm:text-base">
+                                <span id="pet-display-species">Perro</span> • <span id="pet-display-breed">Beagle / Mestizo</span>
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span id="pet-display-gender" class="bg-blue-50 text-blue-700 px-3 py-1 rounded-xl text-xs font-bold border border-blue-100 flex items-center gap-1">
+                                <i class="fa-solid fa-mars"></i> Macho
+                            </span>
+                            <span id="pet-display-age" class="bg-amber-50 text-amber-700 px-3 py-1 rounded-xl text-xs font-bold border border-amber-100">
+                                3 años
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción Inmediata -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        <a id="btn-call" href="tel:+5491155550199" class="flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all">
+                            <i class="fa-solid fa-phone text-lg"></i>
+                            <span>Llamar al Dueño</span>
+                        </a>
+                        <a id="btn-whatsapp" href="https://wa.me/5491155550199?text=Hola,%20encontré%20a%20tu%20mascota%20Boomer" target="_blank" class="flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all">
+                            <i class="fa-brands fa-whatsapp text-xl"></i>
+                            <span>Enviar WhatsApp</span>
+                        </a>
+                    </div>
+
+                    <!-- Botón Enviar GPS -->
+                    <button onclick="sendGpsLocation()" class="w-full flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 px-4 rounded-xl shadow transition-all text-sm">
+                        <i class="fa-solid fa-location-crosshairs text-amber-400"></i>
+                        <span>Enviar mi Ubicación Actual al Dueño</span>
+                    </button>
+
+                    <hr class="border-slate-100">
+
+                    <!-- Secciones de Información Detallada -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <!-- Salud y Medicamentos -->
+                        <div class="bg-red-50/60 border border-red-100 rounded-2xl p-4 space-y-2">
+                            <div class="flex items-center space-x-2 text-red-700 font-bold text-sm">
+                                <i class="fa-solid fa-heart-pulse"></i>
+                                <span>Salud y Medicación</span>
+                            </div>
+                            <p id="pet-display-health" class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+                                Requiere medicación diaria para alergia en la piel. Alérgico al pollo. Tiene vacuna antirrábica al día.
+                            </p>
+                        </div>
+
+                        <!-- Comportamiento -->
+                        <div class="bg-amber-50/60 border border-amber-100 rounded-2xl p-4 space-y-2">
+                            <div class="flex items-center space-x-2 text-amber-700 font-bold text-sm">
+                                <i class="fa-solid fa-face-frown-open"></i>
+                                <span>Carácter y Miedos</span>
+                            </div>
+                            <p id="pet-display-behavior" class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+                                Muy amigable y dócil. Se asusta mucho con los truenos y fuegos artificiales (tiende a correr). Acepta comida con facilidad.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- Dónde Vive -->
+                    <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
+                        <div class="flex items-center space-x-2 text-slate-700 font-bold text-sm">
+                            <i class="fa-solid fa-house-chimney text-amber-500"></i>
+                            <span>¿Dónde vive? / Dirección</span>
+                        </div>
+                        <p id="pet-display-address" class="text-xs sm:text-sm text-slate-700 font-medium">
+                            Barrio Las Heras, Calle Belgrano 1240 (Entre Mitre y San Martín).
+                        </p>
+                    </div>
+
+                    <!-- Datos Adicionales del Dueño -->
+                    <div class="border-t border-slate-100 pt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-slate-500 gap-2">
+                        <div>
+                            <i class="fa-solid fa-user text-slate-400 mr-1"></i> Responsable: <strong id="pet-display-owner" class="text-slate-700">Carlos Mendoza</strong>
+                        </div>
+                        <div>
+                            <i class="fa-solid fa-phone-volume text-slate-400 mr-1"></i> Resp. Secundario: <span id="pet-display-altphone" class="text-slate-700 font-medium">+54 9 11 4444-2211</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VISTA 2: PANEL DEL DUEÑO (CONFIGURACIÓN)   -->
+        <!-- ========================================== -->
+        <section id="view-admin" class="space-y-6 hidden transition-all">
+            
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 space-y-6">
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Panel de Administración de la Mascota</h2>
+                        <p class="text-xs text-slate-500">Modifica la información en tiempo real para quien escanee el código QR</p>
+                    </div>
+
+                    <!-- Toggle Switch de Estado -->
+                    <div class="flex items-center space-x-3 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-full sm:w-auto justify-between sm:justify-start">
+                        <span id="toggle-label" class="text-xs font-bold text-red-600 flex items-center gap-1">
+                            <i class="fa-solid fa-circle text-[10px]"></i> ESTADO PERDIDO
+                        </span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-status" class="sr-only peer" checked onchange="handleStatusToggle(this)">
+                            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Formulario de Edición -->
+                <form id="pet-form" onsubmit="savePetData(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Nombre de la Mascota</label>
+                            <input type="text" id="input-name" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Especie</label>
+                            <select id="input-species" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                                <option value="Perro">Perro</option>
+                                <option value="Gato">Gato</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Raza</label>
+                            <input type="text" id="input-breed" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Edad</label>
+                            <input type="text" id="input-age" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Género</label>
+                            <select id="input-gender" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                                <option value="Macho">Macho</option>
+                                <option value="Hembra">Hembra</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Número de Microchip</label>
+                            <input type="text" id="input-chip" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Teléfono Principal (WhatsApp)</label>
+                            <input type="text" id="input-phone" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Teléfono Secundario</label>
+                            <input type="text" id="input-altphone" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nombre del Dueño / Responsable</label>
+                        <input type="text" id="input-owner" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Dirección / Barrio donde vive</label>
+                        <input type="text" id="input-address" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">URL Foto de la Mascota</label>
+                        <input type="url" id="input-photo" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Enfermedades, Alergias y Medicamentos</label>
+                        <textarea id="input-health" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Comportamiento, Miedos o Consejos</label>
+                        <textarea id="input-behavior" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow transition-all">
+                        <i class="fa-solid fa-floppy-disk mr-2"></i> Guardar Cambios
+                    </button>
+                </form>
+
+            </div>
+
+            <!-- Generador del Código QR para la placa/collar -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 space-y-4">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-qrcode text-amber-500"></i> Código QR para el Collar / Placa
+                </h3>
+                <p class="text-xs text-slate-500">Este es el código QR único generado para grabar o imprimir en el collar de tu mascota.</p>
+                
+                <div class="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                    <!-- Contenedor del QR -->
+                    <div id="qrcode" class="p-3 bg-white rounded-xl shadow-md border border-slate-200 flex items-center justify-center"></div>
+
+                    <div class="space-y-3 text-center sm:text-left">
+                        <div class="text-xs text-slate-500">
+                            <strong>URL vinculada:</strong>
+                            <p id="qr-url-text" class="font-mono text-slate-700 break-all text-[11px] bg-slate-200/60 p-1.5 rounded mt-1"></p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 justify-center sm:justify-start">
+                            <button onclick="downloadQR()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all flex items-center gap-1.5">
+                                <i class="fa-solid fa-download"></i> Descargar QR
+                            </button>
+                            <button onclick="switchTab('public')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold px-4 py-2 rounded-xl transition-all flex items-center gap-1.5">
+                                <i class="fa-solid fa-eye"></i> Probar Escaneo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 mt-auto">
+        <p>PetID &copy; 2026 - Sistema Inteligente de Identificación Animal</p>
+    </footer>
+
+    <!-- Modal de Notificación personalizable -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-message" class="text-xs sm:text-sm font-medium">Notificación</span>
+    </div>
+
+    <script>
+        // Estado Global de la Mascota
+        let petData = {
+            isLost: true,
+            name: "Boomer",
+            species: "Perro",
+            breed: "Beagle / Mestizo",
+            age: "3 años",
+            gender: "Macho",
+            chip: "981020002847192",
+            owner: "Carlos Mendoza",
+            phone: "+5491123347048",
+            altphone: "+54 9 11 2332-7048",
+            address: "Barrio Las Heras, Calle Belgrano 1240 (Entre Mitre y San Martín)",
+            photo: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=400",
+            health: "Requiere medicación diaria para alergia en la piel. Alérgico al pollo. Tiene vacuna antirrábica al día.",
+            behavior: "Muy amigable y dócil. Se asusta mucho con los truenos y fuegos artificiales (tiende a correr). Acepta comida con facilidad."
+        };
+
+        let qrCodeInstance = null;
+
+        // Cargar datos en interfaz al inicio
+        window.onload = function() {
+            renderPetPublicView();
+            populateAdminForm();
+            generateQRCode();
+        };
+
+        // Cambio de pestañas
+        function switchTab(tab) {
+            const publicView = document.getElementById('view-public');
+            const adminView = document.getElementById('view-admin');
+            const btnPublic = document.getElementById('btn-tab-public');
+            const btnAdmin = document.getElementById('btn-tab-admin');
+
+            if (tab === 'public') {
+                publicView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+                btnPublic.className = "flex items-center space-x-2 px-3 sm:px-4 py-1.5 rounded-lg transition-all duration-200 bg-white text-slate-800 shadow-sm font-semibold";
+                btnAdmin.className = "flex items-center space-x-2 px-3 sm:px-4 py-1.5 rounded-lg transition-all duration-200 text-slate-500 hover:text-slate-800";
+            } else {
+                publicView.classList.add('hidden');
+                adminView.classList.remove('hidden');
+                btnAdmin.className = "flex items-center space-x-2 px-3 sm:px-4 py-1.5 rounded-lg transition-all duration-200 bg-white text-slate-800 shadow-sm font-semibold";
+                btnPublic.className = "flex items-center space-x-2 px-3 sm:px-4 py-1.5 rounded-lg transition-all duration-200 text-slate-500 hover:text-slate-800";
+            }
+        }
+
+        // Renderizar datos en la vista pública
+        function renderPetPublicView() {
+            document.getElementById('pet-display-name').innerText = petData.name;
+            document.getElementById('pet-display-species').innerText = petData.species;
+            document.getElementById('pet-display-breed').innerText = petData.breed;
+            document.getElementById('pet-display-age').innerText = petData.age;
+            document.getElementById('pet-display-chip').innerText = petData.chip;
+            document.getElementById('pet-display-owner').innerText = petData.owner;
+            document.getElementById('pet-display-altphone').innerText = petData.altphone;
+            document.getElementById('pet-display-address').innerText = petData.address;
+            document.getElementById('pet-display-health').innerText = petData.health;
+            document.getElementById('pet-display-behavior').innerText = petData.behavior;
+            document.getElementById('pet-display-photo').src = petData.photo;
+
+            // Género icon/text
+            const genderContainer = document.getElementById('pet-display-gender');
+            if (petData.gender === 'Macho') {
+                genderContainer.innerHTML = `<i class="fa-solid fa-mars"></i> Macho`;
+                genderContainer.className = "bg-blue-50 text-blue-700 px-3 py-1 rounded-xl text-xs font-bold border border-blue-100 flex items-center gap-1";
+            } else {
+                genderContainer.innerHTML = `<i class="fa-solid fa-venus"></i> Hembra`;
+                genderContainer.className = "bg-pink-50 text-pink-700 px-3 py-1 rounded-xl text-xs font-bold border border-pink-100 flex items-center gap-1";
+            }
+
+            // Enlaces de contacto
+            const cleanPhone = petData.phone.replace(/[^0-9+]/g, '');
+            document.getElementById('btn-call').href = `tel:${cleanPhone}`;
+            
+            const waMsg = encodeURIComponent(`¡Hola! Escaneé el código QR de ${petData.name} y lo tengo conmigo. Por favor contáctame.`);
+            document.getElementById('btn-whatsapp').href = `https://wa.me/${cleanPhone.replace('+', '')}?text=${waMsg}`;
+
+            // Actualizar Banner de Estado
+            const banner = document.getElementById('status-banner');
+            const icon = document.getElementById('status-icon');
+            const title = document.getElementById('status-title');
+            const desc = document.getElementById('status-desc');
+
+            if (petData.isLost) {
+                banner.className = "bg-red-600 text-white p-4 sm:p-5 rounded-2xl shadow-lg flex items-center justify-between pulse-alert transition-all";
+                icon.className = "fa-solid fa-triangle-exclamation text-2xl sm:text-3xl";
+                title.innerText = "🚨 ¡ESTOY PERDIDO!";
+                desc.innerText = "Por favor ayuda a mi dueño a encontrarme. Ponte en contacto inmediato.";
+            } else {
+                banner.className = "bg-emerald-600 text-white p-4 sm:p-5 rounded-2xl shadow-lg flex items-center justify-between transition-all";
+                icon.className = "fa-solid fa-circle-check text-2xl sm:text-3xl";
+                title.innerText = "✅ SEGURO EN CASA";
+                desc.innerText = "Si estás viendo esto y no está con su dueño, por favor comunícate.";
+            }
+        }
+
+        // Cargar datos en el formulario del dueño
+        function populateAdminForm() {
+            document.getElementById('input-name').value = petData.name;
+            document.getElementById('input-species').value = petData.species;
+            document.getElementById('input-breed').value = petData.breed;
+            document.getElementById('input-age').value = petData.age;
+            document.getElementById('input-gender').value = petData.gender;
+            document.getElementById('input-chip').value = petData.chip;
+            document.getElementById('input-phone').value = petData.phone;
+            document.getElementById('input-altphone').value = petData.altphone;
+            document.getElementById('input-owner').value = petData.owner;
+            document.getElementById('input-address').value = petData.address;
+            document.getElementById('input-photo').value = petData.photo;
+            document.getElementById('input-health').value = petData.health;
+            document.getElementById('input-behavior').value = petData.behavior;
+
+            const toggle = document.getElementById('toggle-status');
+            const toggleLabel = document.getElementById('toggle-label');
+            toggle.checked = petData.isLost;
+            updateToggleLabel(petData.isLost);
+        }
+
+        // Cambiar estado desde el Toggle
+        function handleStatusToggle(checkbox) {
+            petData.isLost = checkbox.checked;
+            updateToggleLabel(petData.isLost);
+            renderPetPublicView();
+            showToast(petData.isLost ? '¡Estado cambiado a PERDIDO!' : 'Estado cambiado a SEGURO', petData.isLost ? 'fa-triangle-exclamation' : 'fa-circle-check');
+        }
+
+        function updateToggleLabel(isLost) {
+            const toggleLabel = document.getElementById('toggle-label');
+            if (isLost) {
+                toggleLabel.className = "text-xs font-bold text-red-600 flex items-center gap-1";
+                toggleLabel.innerHTML = `<i class="fa-solid fa-circle text-[10px]"></i> ESTADO PERDIDO`;
+            } else {
+                toggleLabel.className = "text-xs font-bold text-emerald-600 flex items-center gap-1";
+                toggleLabel.innerHTML = `<i class="fa-solid fa-circle text-[10px]"></i> SEGURO EN CASA`;
+            }
+        }
+
+        // Guardar cambios del formulario
+        function savePetData(e) {
+            e.preventDefault();
+            petData.name = document.getElementById('input-name').value;
+            petData.species = document.getElementById('input-species').value;
+            petData.breed = document.getElementById('input-breed').value;
+            petData.age = document.getElementById('input-age').value;
+            petData.gender = document.getElementById('input-gender').value;
+            petData.chip = document.getElementById('input-chip').value;
+            petData.phone = document.getElementById('input-phone').value;
+            petData.altphone = document.getElementById('input-altphone').value;
+            petData.owner = document.getElementById('input-owner').value;
+            petData.address = document.getElementById('input-address').value;
+            petData.photo = document.getElementById('input-photo').value;
+            petData.health = document.getElementById('input-health').value;
+            petData.behavior = document.getElementById('input-behavior').value;
+
+            renderPetPublicView();
+            showToast('Datos actualizados correctamente', 'fa-circle-check');
+        }
+
+        // Generar Código QR
+        function generateQRCode() {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = ''; // Limpiar previo
+            
+            // Simular URL del perfil público
+            const currentUrl = window.location.href.split('#')[0] + '?pet_id=' + petData.chip;
+            document.getElementById('qr-url-text').innerText = currentUrl;
+
+            qrCodeInstance = new QRCode(qrContainer, {
+                text: currentUrl,
+                width: 128,
+                height: 128,
+                colorDark: "#0f172a",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        // Descargar Código QR generado
+        function downloadQR() {
+            const img = document.querySelector('#qrcode img');
+            if (img && img.src) {
+                const link = document.createElement('a');
+                link.href = img.src;
+                link.download = `QR_Collar_${petData.name}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                showToast('Generando imagen del QR...', 'fa-circle-info');
+            }
+        }
+
+        // Simulación de envío de Geolocalización al dueño
+        function sendGpsLocation() {
+            if ("geolocation" in navigator) {
+                showToast("Obteniendo ubicación GPS...", "fa-location-arrow");
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
+                        
+                        // Abrir mensaje de WhatsApp pre-llenado con ubicación
+                        const cleanPhone = petData.phone.replace(/[^0-9+]/g, '').replace('+', '');
+                        const message = encodeURIComponent(`📍 ¡Hola! Encontré a ${petData.name}. Mi ubicación actual es: ${mapsUrl}`);
+                        
+                        window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
+                        showToast("Ubicación lista para enviar por WhatsApp", "fa-circle-check");
+                    },
+                    (error) => {
+                        // Fallback si niega permisos o no soporta
+                        const cleanPhone = petData.phone.replace(/[^0-9+]/g, '').replace('+', '');
+                        const message = encodeURIComponent(`📍 ¡Hola! Encontré a ${petData.name}. Por favor responde este mensaje para enviarle mi ubicación.`);
+                        window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
+                        showToast("Enviando aviso de hallazgo...", "fa-circle-check");
+                    }
+                );
+            } else {
+                showToast("Tu navegador no soporta geolocalización", "fa-triangle-exclamation");
+            }
+        }
+
+        // Mostrar Toast de notificación
+        function showToast(msg, iconClass) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.innerText = msg;
+            toastIcon.className = `fa-solid ${iconClass} text-emerald-400 text-lg`;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
