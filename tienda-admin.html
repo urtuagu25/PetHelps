@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetHelps - Tienda & Panel de Administración</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .metal-gold { background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%); }
+        .metal-silver { background: linear-gradient(135deg, #e0e0e0 0%, #ffffff 25%, #b0b0b0 50%, #f5f5f5 75%, #999999 100%); }
+        .metal-black { background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #0f172a 100%); }
+        .metal-emerald { background: linear-gradient(135deg, #059669 0%, #34d399 50%, #064e3b 100%); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
+
+    <!-- Header Navigation -->
+    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 p-2.5 rounded-2xl shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-shield-dog text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black tracking-tight text-white">Pet<span class="text-amber-400">Helps</span></h1>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tienda & Gestión Global</p>
+                </div>
+            </div>
+
+            <div id="nav-user-controls" class="flex items-center gap-2 sm:gap-3">
+                <!-- Inyectado dinámicamente según estado de sesión -->
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-10">
+        
+        <!-- Hero & Simulator -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl">
+            <div class="absolute -right-10 -top-10 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-7 space-y-4">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Tecnología de Grabado Láser QR
+                    </span>
+                    <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+                        Placas Inteligentes para la Seguridad de tu Mascota
+                    </h2>
+                    <p class="text-slate-400 text-sm sm:text-base leading-relaxed">
+                        Acceso directo a perfil médico, aviso inmediato al dueño con ubicación GPS y gestión centralizada de mascotas.
+                    </p>
+                </div>
+
+                <!-- Personalizador en Vivo -->
+                <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 p-6 rounded-3xl shadow-xl space-y-5">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-eye"></i> Vista Previa en Tiempo Real
+                        </h3>
+                        <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Simulador</span>
+                    </div>
+
+                    <div class="flex justify-center items-center py-4 bg-slate-950/80 rounded-2xl border border-slate-800">
+                        <div id="live-tag-preview" class="w-32 h-32 metal-gold rounded-full shadow-2xl flex items-center justify-center p-3 text-slate-950 transition-all duration-300 transform hover:scale-105 border-4 border-amber-300/40">
+                            <div class="text-center space-y-0.5">
+                                <p id="preview-tag-name" class="font-black text-sm uppercase tracking-wider truncate max-w-[90px]">BOOMER</p>
+                                <i id="preview-tag-icon" class="fa-solid fa-paw text-xs text-slate-900"></i>
+                                <p id="preview-tag-phone" class="font-mono font-extrabold text-[9px] text-slate-800 tracking-tight">+5491155550199</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 text-xs">
+                        <div>
+                            <label class="block font-bold text-slate-400 mb-1">Nombre para Grabado</label>
+                            <input type="text" id="sim-name" value="BOOMER" oninput="updateLiveSim()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-bold text-white outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-400 mb-1">Teléfono Dorso</label>
+                            <input type="text" id="sim-phone" value="+54 9 11 5555-0199" oninput="updateLiveSim()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-bold text-white outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-400 mb-1">Acabado Metálico</label>
+                            <div class="grid grid-cols-4 gap-2">
+                                <button onclick="setSimFinish('metal-gold')" class="py-2 rounded-xl metal-gold text-slate-950 font-black text-[10px] shadow-md hover:opacity-90">Dorado</button>
+                                <button onclick="setSimFinish('metal-silver')" class="py-2 rounded-xl metal-silver text-slate-950 font-black text-[10px] shadow-md hover:opacity-90">Plata</button>
+                                <button onclick="setSimFinish('metal-black')" class="py-2 rounded-xl metal-black text-white font-black text-[10px] border border-slate-700 shadow-md hover:opacity-90">Negro</button>
+                                <button onclick="setSimFinish('metal-emerald')" class="py-2 rounded-xl metal-emerald text-white font-black text-[10px] shadow-md hover:opacity-90">Silicona</button>
+                            </div>
+                        </div>
+
+                        <button onclick="handlePurchaseCustomTag()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider mt-2">
+                            <i class="fa-solid fa-cart-shopping"></i> Comprar Placa Personalizada ($8.500)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Catálogo de Productos -->
+        <section class="space-y-6">
+            <div>
+                <h3 class="text-2xl font-black text-white flex items-center gap-2">
+                    <i class="fa-solid fa-store text-amber-400"></i> Catálogo de Placas QR
+                </h3>
+                <p class="text-slate-400 text-xs">Las compras quedan registradas en la base de datos de tu cuenta.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 hover:border-amber-500/50 transition-all group flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="bg-slate-950 h-44 rounded-2xl flex items-center justify-center p-4 border border-slate-800/80">
+                            <div class="w-28 h-28 metal-gold rounded-full border-4 border-amber-300/50 shadow-2xl flex items-center justify-center text-slate-950 group-hover:scale-105 transition-transform">
+                                <div class="text-center">
+                                    <p class="font-black text-xs uppercase">BOOMER</p>
+                                    <i class="fa-solid fa-paw text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">Premium</span>
+                            <h4 class="font-black text-white text-base mt-2">Dorado Inoxidable</h4>
+                            <p class="text-xs text-slate-400 mt-1">Acero reforzado con grabado láser inalterable.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+                        <div>
+                            <span class="text-[10px] text-slate-500 block uppercase font-bold">Precio</span>
+                            <span class="text-lg font-black text-white">$8.500 ARS</span>
+                        </div>
+                        <button onclick="buyProduct('Dorado Inoxidable', 8500)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs transition-all shadow-md">
+                            Comprar Ahora
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 hover:border-amber-500/50 transition-all group flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="bg-slate-950 h-44 rounded-2xl flex items-center justify-center p-4 border border-slate-800/80">
+                            <div class="w-28 h-28 metal-silver rounded-full border-4 border-slate-200/50 shadow-2xl flex items-center justify-center text-slate-950 group-hover:scale-105 transition-transform">
+                                <div class="text-center">
+                                    <p class="font-black text-xs uppercase">LUNA</p>
+                                    <i class="fa-solid fa-bone text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-300 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700">Titanio</span>
+                            <h4 class="font-black text-white text-base mt-2">Plata Titanio Espejado</h4>
+                            <p class="text-xs text-slate-400 mt-1">Ultraligero, resistente al agua y a rayones.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+                        <div>
+                            <span class="text-[10px] text-slate-500 block uppercase font-bold">Precio</span>
+                            <span class="text-lg font-black text-white">$8.500 ARS</span>
+                        </div>
+                        <button onclick="buyProduct('Plata Titanio Espejado', 8500)" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition-all">
+                            Comprar Ahora
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 hover:border-amber-500/50 transition-all group flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="bg-slate-950 h-44 rounded-2xl flex items-center justify-center p-4 border border-slate-800/80">
+                            <div class="w-28 h-28 metal-emerald rounded-2xl border-4 border-emerald-300/50 shadow-2xl flex items-center justify-center text-white group-hover:scale-105 transition-transform">
+                                <div class="text-center">
+                                    <p class="font-black text-xs uppercase">MILO</p>
+                                    <i class="fa-solid fa-shield-cat text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">Silenciosa</span>
+                            <h4 class="font-black text-white text-base mt-2">Silicona Flexible Antiruido</h4>
+                            <p class="text-xs text-slate-400 mt-1">Ideal para gatos o perros sensibles al sonido metálico.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+                        <div>
+                            <span class="text-[10px] text-slate-500 block uppercase font-bold">Precio</span>
+                            <span class="text-lg font-black text-white">$9.200 ARS</span>
+                        </div>
+                        <button onclick="buyProduct('Silicona Flexible Antiruido', 9200)" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition-all">
+                            Comprar Ahora
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel Administrativo Protegido -->
+        <section id="admin-panel-section" class="hidden bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-5">
+                <div>
+                    <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-2.5 py-1 rounded-md uppercase tracking-wider">Acceso Restringido</span>
+                    <h3 class="text-2xl font-black text-white mt-1 flex items-center gap-2">
+                        <i class="fa-solid fa-user-shield text-amber-400"></i> Panel General del Administrador
+                    </h3>
+                    <p class="text-xs text-slate-400">Control total de usuarios registrados, compras en BD y chapitas emitidas.</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <input type="text" id="admin-search" oninput="renderAdminTables()" placeholder="Buscar en la base de datos..." class="bg-slate-950 border border-slate-800 text-xs text-white px-3.5 py-2.5 rounded-xl w-full md:w-64 outline-none focus:border-amber-500">
+                    <button onclick="openNewCodeModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-4 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg">
+                        <i class="fa-solid fa-plus"></i> Registrar QR
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs Admin -->
+            <div class="flex gap-2 border-b border-slate-800 pb-3 text-xs font-bold">
+                <button onclick="switchAdminTab('tags')" id="tab-btn-tags" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-black">Chapitas QR (<span id="count-tags">0</span>)</button>
+                <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Compras BD (<span id="count-orders">0</span>)</button>
+                <button onclick="switchAdminTab('users')" id="tab-btn-users" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Usuarios (<span id="count-users">0</span>)</button>
+            </div>
+
+            <!-- Tabla Chapitas QR -->
+            <div id="admin-view-tags" class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-3.5 rounded-l-xl">Código QR</th>
+                            <th class="p-3.5">Mascota</th>
+                            <th class="p-3.5">Dueño</th>
+                            <th class="p-3.5">Teléfono</th>
+                            <th class="p-3.5">Estado</th>
+                            <th class="p-3.5 rounded-r-xl text-right">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-admin-tags" class="divide-y divide-slate-800 font-medium text-slate-300"></tbody>
+                </table>
+            </div>
+
+            <!-- Tabla Compras -->
+            <div id="admin-view-orders" class="hidden overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-3.5 rounded-l-xl">ID Orden</th>
+                            <th class="p-3.5">Cliente</th>
+                            <th class="p-3.5">Producto</th>
+                            <th class="p-3.5">Monto</th>
+                            <th class="p-3.5">Fecha</th>
+                            <th class="p-3.5 rounded-r-xl">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-admin-orders" class="divide-y divide-slate-800 font-medium text-slate-300"></tbody>
+                </table>
+            </div>
+
+            <!-- Tabla Usuarios -->
+            <div id="admin-view-users" class="hidden overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-3.5 rounded-l-xl">Nombre</th>
+                            <th class="p-3.5">Email</th>
+                            <th class="p-3.5">Rol</th>
+                            <th class="p-3.5 rounded-r-xl">Fecha Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-admin-users" class="divide-y divide-slate-800 font-medium text-slate-300"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Login / Registro / Admin Login -->
+    <div id="modal-auth" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 id="auth-modal-title" class="text-base font-black text-white flex items-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket text-amber-400"></i> Iniciar Sesión
+                </h3>
+                <button onclick="closeAuthModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <!-- Pestañas Auth -->
+            <div class="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl text-[11px] font-bold">
+                <button onclick="switchAuthTab('login')" id="authtab-login" class="py-2 rounded-lg bg-amber-500 text-slate-950 font-black">Cliente</button>
+                <button onclick="switchAuthTab('register')" id="authtab-register" class="py-2 rounded-lg text-slate-400 hover:text-white">Registrarse</button>
+                <button onclick="switchAuthTab('admin')" id="authtab-admin" class="py-2 rounded-lg text-slate-400 hover:text-amber-400"><i class="fa-solid fa-shield-halved mr-1"></i> Admin</button>
+            </div>
+
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4 text-xs" novalidate>
+                <div id="field-name" class="hidden">
+                    <label class="block font-bold text-slate-400 mb-1">Nombre Completo</label>
+                    <input type="text" id="auth-input-name" placeholder="Ej: Agustín Urtubía" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 mb-1">Correo Electrónico</label>
+                    <input type="text" id="auth-input-email" placeholder="tu@email.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white outline-none focus:border-amber-500" required>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 mb-1">Contraseña</label>
+                    <input type="password" id="auth-input-password" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white outline-none focus:border-amber-500" required>
+                </div>
+
+                <div id="admin-credentials-hint" class="hidden bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl text-[11px] text-amber-300 space-y-1">
+                    <p class="font-bold"><i class="fa-solid fa-key mr-1"></i> Credenciales Admin por defecto:</p>
+                    <p class="font-mono">Email: admin@pethelps</p>
+                    <p class="font-mono">Password: admin123</p>
+                </div>
+
+                <button type="submit" id="auth-submit-btn" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider">
+                    Entrar a la Cuenta
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Emisión QR Admin -->
+    <div id="modal-new-code" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-black text-white flex items-center gap-2">
+                    <i class="fa-solid fa-qrcode text-amber-400"></i> Nuevo Código QR
+                </h3>
+                <button onclick="closeNewCodeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleCreateTagCode(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-400 mb-1">Código Placa</label>
+                    <input type="text" id="new-tag-code" placeholder="QR-BOOMER-981" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-mono text-amber-400" required>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 mb-1">Mascota</label>
+                    <input type="text" id="new-tag-pet" placeholder="Boomer" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" required>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 mb-1">Cliente / Dueño</label>
+                    <input type="text" id="new-tag-owner" placeholder="Agustín Urtubía" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" required>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 mb-1">Teléfono</label>
+                    <input type="text" id="new-tag-phone" placeholder="+5491155550199" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white" required>
+                </div>
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all uppercase tracking-wider">
+                    Guardar e Imprimir QR
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script Principal con BD Local Failsafe -->
+    <script>
+        function getDB(key) { return JSON.parse(localStorage.getItem(key) || '[]'); }
+        function saveDB(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+        function getCurrentUser() { return JSON.parse(localStorage.getItem('petid_current_user') || 'null'); }
+
+        // Inicialización y garantía de existencia de la cuenta Admin
+        function initDatabase() {
+            let users = getDB('petid_users');
+            
+            // Si la lista de usuarios no existe o no contiene al admin, lo insertamos/aseguramos
+            const hasAdmin = users.some(u => u.email.toLowerCase() === 'admin@pethelps' || u.email.toLowerCase() === 'admin@pethelps.com');
+            if (!hasAdmin) {
+                users.push({
+                    id: 'usr-admin',
+                    name: 'Administrador PetHelps',
+                    email: 'admin@pethelps',
+                    password: 'admin123',
+                    role: 'admin',
+                    date: new Date().toLocaleDateString()
+                });
+                saveDB('petid_users', users);
+            }
+
+            if (!localStorage.getItem('petid_orders')) {
+                const defaultOrders = [
+                    { id: 'ORD-9021', userId: 'usr-1', userName: 'Agustín Urtubía', item: 'Dorado Inoxidable', total: 8500, date: new Date().toLocaleDateString(), status: 'Completado' }
+                ];
+                saveDB('petid_orders', defaultOrders);
+            }
+
+            if (!localStorage.getItem('petid_tags')) {
+                const defaultTags = [
+                    { code: 'QR-BOOMER-981', pet: 'Boomer', owner: 'Agustín Urtubía', phone: '+54 9 11 5555-0199', status: 'Activa', petId: 'pet-1' },
+                    { code: 'QR-LUNA-302', pet: 'Luna', owner: 'Sofía Martínez', phone: '+54 9 11 4444-2211', status: 'Activa', petId: 'pet-2' }
+                ];
+                saveDB('petid_tags', defaultTags);
+            }
+        }
+
+        let currentAuthMode = 'login';
+        let currentSimFinish = 'metal-gold';
+
+        window.onload = function() {
+            initDatabase();
+            updateNavState();
+            renderAdminTables();
+        };
+
+        function updateNavState() {
+            const user = getCurrentUser();
+            const container = document.getElementById('nav-user-controls');
+            const adminSection = document.getElementById('admin-panel-section');
+
+            if (user) {
+                let adminBadge = user.role === 'admin' ? `<span class="bg-amber-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded uppercase">Admin</span>` : '';
+                container.innerHTML = `
+                    <a href="index-dueno.html" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-paw text-amber-400"></i>
+                        <span class="hidden sm:inline">Mis Mascotas</span>
+                    </a>
+                    <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
+                        <i class="fa-solid fa-user text-amber-400 text-xs"></i>
+                        <span class="text-xs font-bold text-white max-w-[100px] truncate">${user.name}</span>
+                        ${adminBadge}
+                    </div>
+                    <button onclick="handleLogout()" class="px-2.5 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-xl text-xs font-bold transition-all" title="Cerrar Sesión">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                `;
+
+                if (user.role === 'admin') {
+                    adminSection.classList.remove('hidden');
+                } else {
+                    adminSection.classList.add('hidden');
+                }
+            } else {
+                adminSection.classList.add('hidden');
+                container.innerHTML = `
+                    <button onclick="openAuthModal('login')" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 transition-all">
+                        Iniciar Sesión
+                    </button>
+                    <button onclick="openAuthModal('register')" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md">
+                        Registrarse
+                    </button>
+                `;
+            }
+        }
+
+        function openAuthModal(mode) {
+            switchAuthTab(mode);
+            document.getElementById('modal-auth').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('modal-auth').classList.add('hidden');
+        }
+
+        function switchAuthTab(mode) {
+            currentAuthMode = mode;
+            const title = document.getElementById('auth-modal-title');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const nameField = document.getElementById('field-name');
+            const adminHint = document.getElementById('admin-credentials-hint');
+
+            ['login', 'register', 'admin'].forEach(m => {
+                const btn = document.getElementById(`authtab-${m}`);
+                if (m === mode) {
+                    btn.className = "py-2 rounded-lg bg-amber-500 text-slate-950 font-black";
+                } else {
+                    btn.className = "py-2 rounded-lg text-slate-400 hover:text-white";
+                }
+            });
+
+            adminHint.classList.add('hidden');
+            nameField.classList.add('hidden');
+
+            if (mode === 'login') {
+                title.innerHTML = `<i class="fa-solid fa-right-to-bracket text-amber-400"></i> Iniciar Sesión`;
+                submitBtn.innerText = "Entrar a mi Cuenta";
+            } else if (mode === 'register') {
+                title.innerHTML = `<i class="fa-solid fa-user-plus text-amber-400"></i> Crear Cuenta`;
+                submitBtn.innerText = "Registrarme";
+                nameField.classList.remove('hidden');
+            } else if (mode === 'admin') {
+                title.innerHTML = `<i class="fa-solid fa-user-shield text-amber-400"></i> Acceso Administrador`;
+                submitBtn.innerText = "Ingresar al Panel Admin";
+                adminHint.classList.remove('hidden');
+                document.getElementById('auth-input-email').value = "admin@pethelps";
+                document.getElementById('auth-input-password').value = "admin123";
+            }
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const rawEmail = document.getElementById('auth-input-email').value.trim();
+            const email = rawEmail.toLowerCase();
+            const password = document.getElementById('auth-input-password').value.trim();
+            let users = getDB('petid_users');
+
+            // Autenticación rápida / Bypass de seguridad para el Administrador
+            if (email === 'admin@pethelps' || email === 'admin@pethelps.com') {
+                if (password === 'admin123') {
+                    let adminObj = users.find(u => u.role === 'admin');
+                    if (!adminObj) {
+                        adminObj = { id: 'usr-admin', name: 'Administrador PetHelps', email: rawEmail, password: 'admin123', role: 'admin', date: new Date().toLocaleDateString() };
+                        users.push(adminObj);
+                        saveDB('petid_users', users);
+                    }
+                    localStorage.setItem('petid_current_user', JSON.stringify(adminObj));
+                    closeAuthModal();
+                    updateNavState();
+                    renderAdminTables();
+                    return;
+                } else {
+                    return alert("Contraseña de administrador incorrecta.");
+                }
+            }
+
+            if (currentAuthMode === 'register') {
+                const name = document.getElementById('auth-input-name').value.trim();
+                if (users.some(u => u.email.toLowerCase() === email)) return alert("El correo ya se encuentra registrado.");
+                const newUser = { id: 'usr-' + Date.now(), name, email: rawEmail, password, role: 'client', date: new Date().toLocaleDateString() };
+                users.push(newUser);
+                saveDB('petid_users', users);
+                localStorage.setItem('petid_current_user', JSON.stringify(newUser));
+                alert('¡Cuenta creada e inicio de sesión exitoso!');
+            } else {
+                const found = users.find(u => u.email.toLowerCase() === email && u.password === password);
+                if (!found) return alert("Credenciales incorrectas.");
+                if (currentAuthMode === 'admin' && found.role !== 'admin') return alert("Esta cuenta no posee privilegios de Administrador.");
+                localStorage.setItem('petid_current_user', JSON.stringify(found));
+            }
+
+            closeAuthModal();
+            updateNavState();
+            renderAdminTables();
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('petid_current_user');
+            updateNavState();
+        }
+
+        function updateLiveSim() {
+            const name = document.getElementById('sim-name').value || 'BOOMER';
+            const phone = document.getElementById('sim-phone').value || '+54 9 11 5555-0199';
+            document.getElementById('preview-tag-name').innerText = name.toUpperCase();
+            document.getElementById('preview-tag-phone').innerText = phone;
+        }
+
+        function setSimFinish(finishClass) {
+            const preview = document.getElementById('live-tag-preview');
+            preview.className = `w-32 h-32 ${finishClass} rounded-full shadow-2xl flex items-center justify-center p-3 text-slate-950 transition-all duration-300 transform hover:scale-105 border-4 border-amber-300/40`;
+            currentSimFinish = finishClass;
+        }
+
+        function handlePurchaseCustomTag() {
+            const name = document.getElementById('sim-name').value || 'BOOMER';
+            buyProduct(`Placa Personalizada (${name})`, 8500);
+        }
+
+        function buyProduct(itemTitle, price) {
+            const user = getCurrentUser();
+            if (!user) {
+                alert("Debes iniciar sesión para realizar una compra y guardar el registro en la base de datos.");
+                openAuthModal('login');
+                return;
+            }
+
+            const orders = getDB('petid_orders');
+            const newOrder = {
+                id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+                userId: user.id,
+                userName: user.name,
+                item: itemTitle,
+                total: price,
+                date: new Date().toLocaleDateString(),
+                status: 'Completado'
+            };
+            orders.unshift(newOrder);
+            saveDB('petid_orders', orders);
+
+            alert(`¡Compra registrada con éxito!\n\nPedido: ${newOrder.id}\nProducto: ${itemTitle}\nMonto: $${price} ARS\n\nEl pedido se ha guardado en la Base de Datos.`);
+            renderAdminTables();
+        }
+
+        // Panel Admin Tabs y Tablas
+        function switchAdminTab(tab) {
+            ['tags', 'orders', 'users'].forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const view = document.getElementById(`admin-view-${t}`);
+                if (t === tab) {
+                    btn.className = "px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-black";
+                    view.classList.remove('hidden');
+                } else {
+                    btn.className = "px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700";
+                    view.classList.add('hidden');
+                }
+            });
+        }
+
+        function renderAdminTables() {
+            const query = (document.getElementById('admin-search')?.value || '').toLowerCase();
+            const tags = getDB('petid_tags');
+            const orders = getDB('petid_orders');
+            const users = getDB('petid_users');
+
+            document.getElementById('count-tags').innerText = tags.length;
+            document.getElementById('count-orders').innerText = orders.length;
+            document.getElementById('count-users').innerText = users.length;
+
+            // Tabla Tags
+            const filteredTags = tags.filter(t => t.code.toLowerCase().includes(query) || t.pet.toLowerCase().includes(query) || t.owner.toLowerCase().includes(query));
+            document.getElementById('table-admin-tags').innerHTML = filteredTags.map(t => `
+                <tr class="hover:bg-slate-800/50 transition-colors">
+                    <td class="p-3.5 font-mono font-bold text-amber-400">${t.code}</td>
+                    <td class="p-3.5 font-bold text-white">${t.pet}</td>
+                    <td class="p-3.5">${t.owner}</td>
+                    <td class="p-3.5 font-mono text-slate-400">${t.phone}</td>
+                    <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${t.status === 'Activa' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}">${t.status}</span></td>
+                    <td class="p-3.5 text-right"><a href="index-public.html?pet_id=${t.petId || 'pet-1'}" target="_blank" class="px-2.5 py-1 bg-slate-800 text-amber-400 rounded-lg text-xs font-bold border border-slate-700">Ver Ficha</a></td>
+                </tr>
+            `).join('');
+
+            // Tabla Ordenes
+            const filteredOrders = orders.filter(o => o.id.toLowerCase().includes(query) || o.userName.toLowerCase().includes(query) || o.item.toLowerCase().includes(query));
+            document.getElementById('table-admin-orders').innerHTML = filteredOrders.map(o => `
+                <tr class="hover:bg-slate-800/50 transition-colors">
+                    <td class="p-3.5 font-mono font-bold text-amber-400">${o.id}</td>
+                    <td class="p-3.5 font-bold text-white">${o.userName}</td>
+                    <td class="p-3.5">${o.item}</td>
+                    <td class="p-3.5 font-black text-white">$${o.total} ARS</td>
+                    <td class="p-3.5 text-slate-400">${o.date}</td>
+                    <td class="p-3.5"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] font-bold">${o.status}</span></td>
+                </tr>
+            `).join('');
+
+            // Tabla Usuarios
+            const filteredUsers = users.filter(u => u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query));
+            document.getElementById('table-admin-users').innerHTML = filteredUsers.map(u => `
+                <tr class="hover:bg-slate-800/50 transition-colors">
+                    <td class="p-3.5 font-bold text-white">${u.name}</td>
+                    <td class="p-3.5 font-mono text-slate-400">${u.email}</td>
+                    <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.role === 'admin' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-300'}">${u.role}</span></td>
+                    <td class="p-3.5 text-slate-400">${u.date || 'Reciente'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function openNewCodeModal() { document.getElementById('modal-new-code').classList.remove('hidden'); }
+        function closeNewCodeModal() { document.getElementById('modal-new-code').classList.add('hidden'); }
+
+        function handleCreateTagCode(e) {
+            e.preventDefault();
+            const tags = getDB('petid_tags');
+            tags.unshift({
+                code: document.getElementById('new-tag-code').value,
+                pet: document.getElementById('new-tag-pet').value,
+                owner: document.getElementById('new-tag-owner').value,
+                phone: document.getElementById('new-tag-phone').value,
+                status: 'Activa',
+                petId: 'pet-' + Date.now()
+            });
+            saveDB('petid_tags', tags);
+            renderAdminTables();
+            closeNewCodeModal();
+        }
+    </script>
+</body>
+</html>

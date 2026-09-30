@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetHelps - Panel del Dueño</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        @media print {
+            body * { visibility: hidden; }
+            #printable-poster, #printable-poster * { visibility: visible; }
+            #printable-poster { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; background: white; color: black; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-500 text-slate-950 p-2.5 rounded-2xl shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-paw text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black text-white tracking-tight">Pet<span class="text-amber-400">Helps</span></h1>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Gestión del Propietario</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="tienda-admin.html" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs rounded-xl border border-slate-700 transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-store"></i>
+                    <span class="hidden sm:inline">Tienda</span>
+                </a>
+                <a href="#" onclick="openPublicPreview()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md flex items-center gap-1.5">
+                    <i class="fa-solid fa-eye"></i>
+                    <span class="hidden sm:inline">Ver Ficha Pública</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        
+        <!-- Selector de Mascota Activa -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-xl">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="bg-amber-500/10 border border-amber-500/20 text-amber-400 p-3 rounded-2xl">
+                    <i class="fa-solid fa-dog text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Mascota en Edición</p>
+                    <select id="pet-selector" onchange="changeActivePet(this.value)" class="bg-transparent font-black text-lg text-white outline-none cursor-pointer">
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-2 w-full sm:w-auto justify-end">
+                <button onclick="createNewPet()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg">
+                    <i class="fa-solid fa-plus"></i> Nueva Mascota
+                </button>
+                <button onclick="deleteCurrentPet()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-bold px-3 py-2.5 rounded-xl text-xs transition-all">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Sidebar Lateral -->
+            <div class="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
+                
+                <!-- Estado de Emergencia -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Estado de Alerta</h3>
+                    
+                    <div class="flex items-center justify-between bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                        <span id="toggle-label" class="text-xs font-black text-red-500 flex items-center gap-2 uppercase tracking-wider">
+                            <i class="fa-solid fa-circle text-[8px] animate-pulse"></i> PERDIDO
+                        </span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-status" class="sr-only peer" onchange="handleStatusToggle(this)">
+                            <div class="w-11 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                        </label>
+                    </div>
+
+                    <button onclick="openPosterModal()" class="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl text-xs shadow-lg transition-all flex items-center justify-center gap-2 uppercase tracking-wider">
+                        <i class="fa-solid fa-file-pdf"></i> Imprimir Cartel "SE BUSCA"
+                    </button>
+                </div>
+
+                <!-- QR Generado -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl text-center">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider text-left">Código QR del Perfil</h3>
+                    <div id="qrcode" class="p-3 bg-white rounded-2xl flex items-center justify-center mx-auto max-w-[160px]"></div>
+                    <p class="text-[10px] text-slate-500 font-mono">Resuelve automáticamente al publicarse en internet.</p>
+                    <button onclick="downloadQR()" class="w-full bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2.5 rounded-xl border border-slate-700 transition-all">
+                        <i class="fa-solid fa-download mr-1 text-amber-400"></i> Descargar Imagen QR
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Formulario Principal -->
+            <div class="lg:col-span-8">
+                <form id="pet-form" onsubmit="savePetData(event)" class="space-y-6">
+                    
+                    <!-- Datos Principales -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-5 shadow-xl">
+                        <h2 class="text-base font-black text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                            <i class="fa-solid fa-paw text-amber-400"></i> Información de la Mascota
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1">Nombre</label>
+                                <input type="text" id="input-name" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold text-white outline-none focus:border-amber-500" required>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1">Especie</label>
+                                <select id="input-species" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold text-white outline-none focus:border-amber-500">
+                                    <option value="Perro">Perro</option>
+                                    <option value="Gato">Gato</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1">Raza</label>
+                                <input type="text" id="input-breed" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold text-white outline-none focus:border-amber-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block font-bold text-slate-400 mb-1">Edad</label>
+                                    <input type="text" id="input-age" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold text-white outline-none focus:border-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-400 mb-1">Sexo</label>
+                                    <select id="input-gender" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold text-white outline-none focus:border-amber-500">
+                                        <option value="Macho">Macho</option>
+                                        <option value="Hembra">Hembra</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1">N° Microchip</label>
+                                <input type="text" id="input-chip" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold text-amber-400 outline-none focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1">Recompensa (Opcional)</label>
+                                <input type="text" id="input-reward" placeholder="Si se deja vacío no se mostrará" class="w-full px-3.5 py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl font-extrabold text-amber-300 outline-none focus:border-amber-500">
+                            </div>
+
+                            <!-- Foto & Cropper -->
+                            <div class="col-span-1 md:col-span-2 space-y-2">
+                                <label class="block font-bold text-slate-400">Fotografía</label>
+                                <div class="flex items-center gap-4 bg-slate-950 p-4 border border-slate-800 rounded-2xl">
+                                    <img id="input-photo-preview" src="" class="w-20 h-20 object-cover rounded-2xl border border-slate-800 bg-slate-900 flex-shrink-0">
+                                    <div class="flex-grow space-y-2">
+                                        <label class="cursor-pointer inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs transition-all shadow-md">
+                                            <i class="fa-solid fa-camera"></i> Seleccionar Imagen
+                                            <input type="file" id="input-photo-file" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+                                        </label>
+                                        <p class="text-[10px] text-slate-500">Permite recortar y encuadrar antes de guardar.</p>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="input-photo-data">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Salud -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-5 shadow-xl">
+                        <h2 class="text-base font-black text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                            <i class="fa-solid fa-notes-medical text-red-400"></i> Ficha Médica
+                        </h2>
+                        
+                        <div class="space-y-4 text-xs">
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1">Cuidados Especiales / Alergias</label>
+                                <textarea id="input-health" rows="2" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-medium text-white outline-none focus:border-amber-500"></textarea>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1">Dieta Alimenticia</label>
+                                <input type="text" id="input-diet" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-medium text-white outline-none focus:border-amber-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contacto -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-5 shadow-xl">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                            <h2 class="text-base font-black text-white flex items-center gap-2">
+                                <i class="fa-solid fa-address-book text-blue-400"></i> Datos de Contacto
+                            </h2>
+
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-bold text-slate-400">Modo Privacidad</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="input-privacy" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1">Responsable</label>
+                                <input type="text" id="input-owner" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold text-white outline-none focus:border-amber-500" required>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1">Teléfono Principal</label>
+                                <input type="text" id="input-phone" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold text-white outline-none focus:border-amber-500" required>
+                            </div>
+                            <div class="col-span-1 md:col-span-2">
+                                <label class="block font-bold text-slate-400 mb-1">Dirección / Localidad</label>
+                                <input type="text" id="input-address" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold text-white outline-none focus:border-amber-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botón Flotante -->
+                    <div class="sticky bottom-4 z-30 bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-2xl flex justify-between items-center gap-4">
+                        <p class="text-slate-400 text-xs font-bold hidden sm:block"><i class="fa-solid fa-floppy-disk text-amber-400 mr-1"></i> Sincronizado en LocalStorage</p>
+                        <button type="submit" class="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 px-8 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider">
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Recortador Cropper -->
+    <div id="modal-crop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-black text-white flex items-center gap-2">
+                    <i class="fa-solid fa-crop-simple text-amber-400"></i> Recortar Imagen
+                </h3>
+                <button type="button" onclick="closeCropModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="max-h-[50vh] overflow-hidden bg-slate-950 rounded-2xl flex items-center justify-center p-2">
+                <img id="crop-image" class="max-w-full max-h-[45vh] block">
+            </div>
+
+            <div class="flex justify-between items-center gap-3 pt-2">
+                <button type="button" onclick="closeCropModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl text-xs transition-all">Cancelar</button>
+                <button type="button" onclick="applyCrop()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition-all shadow-md">Aplicar Recorte</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Poster Imprimible -->
+    <div id="modal-poster" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white text-slate-900 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden my-8">
+            <div class="no-print bg-slate-900 text-white p-4 flex justify-between items-center border-b border-slate-800">
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-400"><i class="fa-solid fa-print mr-1"></i> Cartel Imprimible</span>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-1.5 rounded-xl font-bold text-xs">Imprimir / PDF</button>
+                    <button onclick="closePosterModal()" class="text-slate-400 hover:text-white px-2 py-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+            </div>
+
+            <div id="printable-poster" class="p-8 space-y-6 text-center bg-white">
+                <div class="bg-red-600 text-white py-4 px-6 rounded-2xl shadow-md">
+                    <h1 class="text-4xl font-black tracking-widest uppercase">¡SE BUSCA!</h1>
+                    <p id="poster-reward" class="text-base font-black text-amber-300 mt-1 uppercase hidden"></p>
+                </div>
+
+                <div class="flex items-center justify-center gap-6">
+                    <img id="poster-photo" src="" class="w-48 h-48 object-cover rounded-2xl border-4 border-slate-900 shadow-md">
+                    <div id="poster-qrcode" class="p-2 border-2 border-slate-900 rounded-xl"></div>
+                </div>
+
+                <div class="space-y-1 border-t border-b border-slate-200 py-3">
+                    <h2 id="poster-name" class="text-3xl font-black text-slate-900">BOOMER</h2>
+                    <p class="text-sm font-bold text-slate-600"><span id="poster-breed">Beagle</span> • <span id="poster-gender">Macho</span> • <span id="poster-age">3 años</span></p>
+                </div>
+
+                <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200 space-y-1">
+                    <p class="text-[11px] font-bold uppercase text-slate-400">Si lo ves, comunicate urgente a:</p>
+                    <p id="poster-phone" class="text-2xl font-black text-slate-900">+54 9 11 5555-0199</p>
+                    <p id="poster-owner" class="text-xs font-bold text-slate-600">Contacto: Agustín Urtubía</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const initialData = [{
+            id: "pet-1", isLost: true, privacyMode: false, name: "Boomer", species: "Perro", breed: "Mestizo",
+            age: "3 años", gender: "Macho", chip: "981020002847192", reward: "$50.000 ARS", owner: "Agustín Urtubía",
+            phone: "+5491155550199", address: "Victoria, San Fernando",
+            photo: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=600",
+            health: "Requiere medicación diaria para alergias.", diet: "Hipoalergénica"
+        }];
+
+        let pets = [];
+        let activePetId = "pet-1";
+        let cropperInstance = null;
+
+        window.onload = function() {
+            const saved = localStorage.getItem('petid_pets_data');
+            if (saved) { try { pets = JSON.parse(saved); } catch(e) { pets = initialData; } } 
+            else { pets = initialData; savePetsToStorage(); }
+            activePetId = pets[0]?.id || "pet-1";
+            updatePetSelectorDropdown(); populateAdminForm(); generateQRCode();
+        };
+
+        function savePetsToStorage() { localStorage.setItem('petid_pets_data', JSON.stringify(pets)); }
+        function getActivePet() { return pets.find(p => p.id === activePetId) || pets[0]; }
+
+        function populateAdminForm() {
+            const pet = getActivePet();
+            if (!pet) return;
+            document.getElementById('input-name').value = pet.name;
+            document.getElementById('input-species').value = pet.species;
+            document.getElementById('input-breed').value = pet.breed || '';
+            document.getElementById('input-age').value = pet.age || '';
+            document.getElementById('input-gender').value = pet.gender || 'Macho';
+            document.getElementById('input-chip').value = pet.chip || '';
+            document.getElementById('input-reward').value = pet.reward || '';
+            document.getElementById('input-phone').value = pet.phone || '';
+            document.getElementById('input-owner').value = pet.owner || '';
+            document.getElementById('input-address').value = pet.address || '';
+            document.getElementById('input-photo-preview').src = pet.photo;
+            document.getElementById('input-photo-data').value = pet.photo;
+            document.getElementById('input-health').value = pet.health || '';
+            document.getElementById('input-diet').value = pet.diet || '';
+            document.getElementById('input-privacy').checked = pet.privacyMode || false;
+            document.getElementById('toggle-status').checked = pet.isLost || false;
+            updateToggleLabel(pet.isLost);
+        }
+
+        function updatePetSelectorDropdown() {
+            const selector = document.getElementById('pet-selector');
+            selector.innerHTML = pets.map(p => `<option value="${p.id}" ${p.id === activePetId ? 'selected' : ''}>${p.name}</option>`).join('');
+        }
+
+        function changeActivePet(id) { activePetId = id; populateAdminForm(); generateQRCode(); }
+
+        function createNewPet() {
+            const newId = "pet-" + Date.now();
+            pets.push({ id: newId, isLost: false, privacyMode: false, name: "Nueva Mascota", species: "Perro", breed: "Mestizo", age: "1 año", gender: "Macho", chip: "", reward: "", owner: "Propietario", phone: "+5491100000000", address: "Dirección", photo: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=600", health: "", diet: "" });
+            activePetId = newId; savePetsToStorage(); updatePetSelectorDropdown(); populateAdminForm(); generateQRCode();
+        }
+
+        function deleteCurrentPet() {
+            if (pets.length <= 1) return alert("Debes conservar al menos una mascota.");
+            if (confirm("¿Eliminar este perfil de mascota?")) {
+                pets = pets.filter(p => p.id !== activePetId); activePetId = pets[0].id;
+                savePetsToStorage(); updatePetSelectorDropdown(); populateAdminForm(); generateQRCode();
+            }
+        }
+
+        function handleStatusToggle(checkbox) {
+            const pet = getActivePet(); pet.isLost = checkbox.checked;
+            updateToggleLabel(pet.isLost); savePetsToStorage();
+        }
+
+        function updateToggleLabel(isLost) {
+            const toggleLabel = document.getElementById('toggle-label');
+            toggleLabel.className = `text-xs font-black ${isLost ? 'text-red-500' : 'text-emerald-400'} flex items-center gap-2 uppercase tracking-wider`;
+            toggleLabel.innerHTML = `<i class="fa-solid fa-circle text-[8px] animate-pulse"></i> ${isLost ? 'PERDIDO' : 'EN CASA'}`;
+        }
+
+        function savePetData(e) {
+            e.preventDefault();
+            const pet = getActivePet();
+            pet.name = document.getElementById('input-name').value;
+            pet.species = document.getElementById('input-species').value;
+            pet.breed = document.getElementById('input-breed').value;
+            pet.age = document.getElementById('input-age').value;
+            pet.gender = document.getElementById('input-gender').value;
+            pet.chip = document.getElementById('input-chip').value;
+            pet.reward = document.getElementById('input-reward').value.trim(); // Se guarda o limpia
+            pet.phone = document.getElementById('input-phone').value;
+            pet.owner = document.getElementById('input-owner').value;
+            pet.address = document.getElementById('input-address').value;
+            pet.photo = document.getElementById('input-photo-data').value || pet.photo;
+            pet.health = document.getElementById('input-health').value;
+            pet.diet = document.getElementById('input-diet').value;
+            pet.privacyMode = document.getElementById('input-privacy').checked;
+            savePetsToStorage(); updatePetSelectorDropdown(); populateAdminForm();
+            alert('¡Datos de la mascota guardados exitosamente!');
+        }
+
+        // Generador dinámico de URL del QR compatible con publicación
+        function getPublicPetUrl() {
+            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+            return `${baseUrl}/index-public.html?pet_id=${activePetId}`;
+        }
+
+        function generateQRCode() {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = ''; 
+            new QRCode(qrContainer, { text: getPublicPetUrl(), width: 140, height: 140 });
+        }
+
+        function downloadQR() {
+            const img = document.querySelector('#qrcode img');
+            if (img && img.src) {
+                const link = document.createElement('a');
+                link.href = img.src; link.download = `QR_${getActivePet().name}.png`;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            }
+        }
+
+        function openPublicPreview() {
+            window.open(`index-public.html?pet_id=${activePetId}`, '_blank');
+        }
+
+        // Cropper
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const cropImg = document.getElementById('crop-image');
+                cropImg.src = e.target.result;
+                document.getElementById('modal-crop').classList.remove('hidden');
+                if (cropperInstance) cropperInstance.destroy();
+                cropperInstance = new Cropper(cropImg, { aspectRatio: 1, viewMode: 1 });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function closeCropModal() {
+            document.getElementById('modal-crop').classList.add('hidden');
+            if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+        }
+
+        function applyCrop() {
+            if (!cropperInstance) return;
+            const canvas = cropperInstance.getCroppedCanvas({ width: 600, height: 600 });
+            if (canvas) {
+                const base64 = canvas.toDataURL('image/jpeg', 0.85);
+                document.getElementById('input-photo-preview').src = base64;
+                document.getElementById('input-photo-data').value = base64;
+            }
+            closeCropModal();
+        }
+
+        // Cartel "SE BUSCA" con ocultamiento estricto de Recompensa si está vacía
+        function openPosterModal() {
+            const pet = getActivePet();
+            document.getElementById('poster-name').innerText = pet.name.toUpperCase();
+            document.getElementById('poster-breed').innerText = pet.breed || 'Mestizo';
+            document.getElementById('poster-gender').innerText = pet.gender || 'Macho';
+            document.getElementById('poster-age').innerText = pet.age || 'Edad N/D';
+            document.getElementById('poster-phone').innerText = pet.phone;
+            document.getElementById('poster-owner').innerText = `Contacto: ${pet.owner}`;
+            document.getElementById('poster-photo').src = pet.photo;
+
+            const rewardEl = document.getElementById('poster-reward');
+            if (pet.reward && pet.reward.trim() !== '') {
+                rewardEl.innerText = `RECOMPENSA: ${pet.reward}`;
+                rewardEl.classList.remove('hidden');
+            } else {
+                rewardEl.classList.add('hidden'); // Ocultar por completo si no hay recompensa
+            }
+
+            const qrContainer = document.getElementById('poster-qrcode');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, { text: getPublicPetUrl(), width: 110, height: 110 });
+            document.getElementById('modal-poster').classList.remove('hidden');
+        }
+
+        function closePosterModal() { document.getElementById('modal-poster').classList.add('hidden'); }
+    </script>
+</body>
+</html>
